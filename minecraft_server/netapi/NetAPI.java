@@ -86,6 +86,25 @@ public class NetAPI {
 		sendPacketToPlayers(packet, players.toArray(new EntityPlayer[players.size()]));
 	}
 	
+	/**
+	* Send a P2P packet to many players
+	*
+	* @param	packet		The packet to send
+	*/
+	public static void sendPacketToPlayers(NetP2PPacket packet) {
+		String[] 	recipients = packet.getRecipients();
+		String		username;
+		NetPacketThread t; 
+		
+		for(int x = 0; x < recipients.length; x++) {
+			username = recipients[x];
+			// Check if the user exists
+			if((username != null) && ((t = netSendThreads.get(username)) != null)) {
+				t.send(packet);
+			}
+		}
+	}
+	
 	//===================
 	// Handler handling methods
 	//===================
@@ -168,6 +187,7 @@ public class NetAPI {
 		throws IOException {
 		if(mode) {
 			NetPacketThread netThread = new NetPacketThread(socket, mode);
+			netThread.setSenderName(username);
 			netSendThreads.put(username, netThread);
 			return netThread;
 		} else {

@@ -47,6 +47,12 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	private boolean				sender = true;
+	/**
+	* Name of user sending data from this thread
+	*
+	* @since	0.1
+	*/
+	private String				senderName;
 	
 	/**
 	* Called at creation of a new server
@@ -76,6 +82,16 @@ public class NetPacketThread extends Thread {
 	*/
 	public void send(NetPacket packet) {
 		sendQueue.add(packet);
+	}
+	
+	/**
+	* Set the username for sending data
+	*
+	* @since	0.1
+	* @param	username	Username of this sender
+	*/
+	public void setSenderName(String username) {
+		this.senderName = username;
 	}
 	
 	//===============
@@ -130,7 +146,14 @@ public class NetPacketThread extends Thread {
 		
 		try {
 			while(alive && ((in = ois.readObject()) != null)) {
-				if(in instanceof NetPacket) {
+				// P2P packets are ignored by the server
+				if(in instanceof NetP2PPacket) {
+					NetP2PPacket packet = (NetP2PPacket) in;
+					System.out.println("(NetAPI) Received a P2P Packet: " + packet.getClass().getName());
+					
+					processP2PPacket(packet);
+				// P2S packets are controlled by the server
+				} else if(in instanceof NetPacket) {
 					NetPacket packet = (NetPacket) in;
 					
 					NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
@@ -149,6 +172,17 @@ public class NetPacketThread extends Thread {
 		} catch (ClassNotFoundException e) {
 			System.err.println("(NetAPI) Could not find class: " + e.getMessage());
 		}
+	}
+	
+	/**
+	* Process an incoming P2P packet and send it on to
+	* any real peers
+	*
+	* @param	packet	Packet to send
+	*/
+	private void processP2PPacket(NetP2PPacket packet) {
+		packet.setSender(senderName);
+		NetAPI.sendPacketToPlayers(packet);
 	}
 	
 	//===============

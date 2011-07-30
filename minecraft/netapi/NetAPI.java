@@ -83,6 +83,15 @@ public class NetAPI {
 		sendPacketToPlayers(packet, players.toArray(new EntityPlayer[players.size()]));
 	}
 	
+	/**
+	* Send a P2P packet to many players
+	*
+	* @param	packet		The packet to send
+	*/
+	public static void sendPacketToPlayers(NetP2PPacket packet) {
+		netThread.send(packet);
+	}
+	
 	//===================
 	// Handler handling methods
 	//===================
