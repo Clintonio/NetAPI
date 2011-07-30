@@ -4,6 +4,9 @@ import java.net.Socket;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.HashSet;
+import java.util.Collection;
+
+import net.minecraft.src.EntityPlayer;
 
 /**
 * NetAPI for easy controlling of the sending and receiving of packets
@@ -22,7 +25,7 @@ public class NetAPI {
 	private static Hashtable<NetPacket, HashSet<NetPacketHandler>> handlers 
 		= new Hashtable<NetPacket, HashSet<NetPacketHandler>>();
 	/**
-	* The packet thread
+	* The packet thread for sending packets
 	*
 	* @since	0.1
 	*/
@@ -39,6 +42,45 @@ public class NetAPI {
 	*/
 	public static void sendPacket(NetPacket packet) {
 		netThread.send(packet);
+	}
+	
+	/**
+	* Sends a packet to a specific player
+	*
+	* @param	packet		The packet to send
+	* @param	player		Player to send packet to
+	*/
+	public static void sendPacketToPlayer(NetPacket packet, EntityPlayer player) {
+		String username = player.username;
+		if(username != null) {
+			netThread.send(new NetP2PPacket(username, packet));
+		}
+	}
+	
+	/**
+	* Send a packet to many players
+	*
+	* @param	packet		The packet to send
+	* @param	players		The players to send the packet to
+	*/
+	public static void sendPacketToPlayers(NetPacket packet, EntityPlayer[] players) {
+		String[] unames = new String[players.length];
+		
+		for(int x = 0; x < players.length; x++) {
+			unames[x] = players[x].username;
+		}
+		
+		netThread.send(new NetP2PPacket(unames, packet));
+	}
+	
+	/**
+	* Send a packet to many players
+	*
+	* @param	packet		The packet to send
+	* @param	players		The players to send to
+	*/
+	public static void sendPacketToPlayers(NetPacket packet, Collection<EntityPlayer> players) {
+		sendPacketToPlayers(packet, players.toArray(new EntityPlayer[players.size()]));
 	}
 	
 	//===================

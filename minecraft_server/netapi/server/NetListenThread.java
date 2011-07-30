@@ -85,6 +85,7 @@ public class NetListenThread extends Thread {
 				// player in case of a mix up/ hack (n.b: this is integrity code)
 				if(netMan.getSocketAddress() == sock.getInetAddress()) {
 					try {
+						netMan.setUsername(name);
 						netMan.setNetAPISocket(sock);
 					} catch (IOException e) {
 						System.out.println("(NetAPI) Could not connect player " + name);
@@ -110,7 +111,7 @@ public class NetListenThread extends Thread {
 	*
 	* @return	A found username
 	*/
-	public String getUsername(Socket socket) {
+	private String getUsername(Socket socket) {
 		try {
 			mcServer.logger.warning("(NetAPI) Creating input stream");
 			ObjectInputStream  ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));

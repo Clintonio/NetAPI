@@ -32,6 +32,7 @@ public class NetworkManager
 	//=========
 	private NetPacketThread netSendThread;
 	private NetPacketThread netReceiveThread;
+	private String			username = "NONAME";
 	//=========
 	// -NetAPI
 	//=========
@@ -82,10 +83,20 @@ public class NetworkManager
 	* @param	socket		NetAPI Socket
 	*/
 	public void setNetAPISocket(Socket socket) throws IOException {
-		netSendThread 		= NetAPI.getNewNetThread(socket, true);
-		netReceiveThread	= NetAPI.getNewNetThread(socket, false);
+		netSendThread 		= NetAPI.getNewNetThread(socket, username, true);
+		netReceiveThread	= NetAPI.getNewNetThread(socket, username, false);
 		netSendThread.start();
 		netReceiveThread.start();
+	}
+	
+	/**
+	* Set the username for the current network manager
+	*
+	* @since	0.1
+	* @param	username	Username
+	*/
+	public void setUsername(String username) {
+		this.username = username;
 	}
 	
 	/**
@@ -220,6 +231,8 @@ public class NetworkManager
 		if(netSendThread != null) {
 			netSendThread.stopThread();
 			netReceiveThread.stopThread();
+			
+			NetAPI.playerDisconnected(username);
 		}
 		//=========
 		// -NetAPI
