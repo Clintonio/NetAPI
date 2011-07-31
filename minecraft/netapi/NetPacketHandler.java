@@ -1,5 +1,7 @@
 package netapi;
 
+import netapi.packet.NetPacket;
+
 /**
 * A handler that is executed every time
 * a packet of a certain type is received

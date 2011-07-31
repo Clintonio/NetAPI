@@ -1,4 +1,4 @@
-package netapi;
+package netapi.packet;
 
 /**
 * A username packet to allow users

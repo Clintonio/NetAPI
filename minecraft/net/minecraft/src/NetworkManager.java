@@ -9,7 +9,7 @@ package net.minecraft.src;
 //=========
 import netapi.NetPacketThread;
 import netapi.NetAPI;
-import netapi.UsernamePacket;
+import netapi.packet.UsernamePacket;
 //=========
 // -NetAPI
 //=========

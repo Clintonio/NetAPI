@@ -10,7 +10,7 @@ import java.net.SocketException;
 
 import net.minecraft.server.MinecraftServer;
 
-import netapi.UsernamePacket;
+import netapi.packet.UsernamePacket;
 
 /**
 * The thread for letting netapi servers listen to netapi connections

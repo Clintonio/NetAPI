@@ -1,4 +1,4 @@
-package netapi;
+package netapi.packet;
 
 import java.io.Serializable;
 

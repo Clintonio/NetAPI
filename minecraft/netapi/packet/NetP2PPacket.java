@@ -1,4 +1,4 @@
-package netapi;
+package netapi.packet;
 
 /**
 * A packet explicitly for sending data from one player

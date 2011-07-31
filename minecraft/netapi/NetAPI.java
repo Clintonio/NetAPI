@@ -1,5 +1,8 @@
 package netapi;
 
+import netapi.packet.NetPacket;
+import netapi.packet.NetP2PPacket;
+
 import java.net.Socket;
 import java.io.IOException;
 import java.util.Hashtable;

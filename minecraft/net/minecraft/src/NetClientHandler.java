@@ -13,7 +13,7 @@ import net.minecraft.client.Minecraft;
 // +NetAPI
 //=========
 import netapi.NetAPI;
-import netapi.UsernamePacket;
+import netapi.packet.UsernamePacket;
 //=========
 // -NetAPI
 //=========
