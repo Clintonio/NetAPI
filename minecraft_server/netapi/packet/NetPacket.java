@@ -23,7 +23,7 @@ public abstract class NetPacket implements Serializable {
 	*
 	* @since	0.1
 	*/
-	private int		timestamp;
+	private long		timestamp;
 	
 	/**
 	* Create a standard packet
@@ -53,7 +53,7 @@ public abstract class NetPacket implements Serializable {
 	* @since	0.1
 	* @return	Timestamp this packet was created
 	*/
-	public int getTimestamp() {
+	public long getTimestamp() {
 		return timestamp;
 	}
 	
@@ -63,7 +63,7 @@ public abstract class NetPacket implements Serializable {
 	* @since	0.1
 	* @return	Mod ID for this packet
 	*/
-	public int getModID() {
+	public String getModID() {
 		return modID;
 	}	
 	

@@ -25,8 +25,8 @@ public class NetAPI {
 	*
 	* @since	0.1
 	*/
-	private static Hashtable<NetPacket, HashSet<NetPacketHandler>> handlers 
-		= new Hashtable<NetPacket, HashSet<NetPacketHandler>>();
+	private static Hashtable<Class, HashSet<NetPacketHandler>> handlers 
+		= new Hashtable<Class, HashSet<NetPacketHandler>>();
 	/**
 	* The packet thread for sending packets
 	*
@@ -105,10 +105,11 @@ public class NetAPI {
 	* @return	Array of all handlers for a given object
 	*/
 	public static NetPacketHandler[] getHandlers(NetPacket packet) {
-		if(!handlers.containsKey(packet)) {
+		Class packetClass = packet.getClass();
+		if(!handlers.containsKey(packetClass)) {
 			return new NetPacketHandler[0];
 		} else {
-			HashSet<NetPacketHandler> s = handlers.get(packet);
+			HashSet<NetPacketHandler> s = handlers.get(packetClass);
 			
 			return s.toArray(new NetPacketHandler[s.size()]);
 		}
@@ -121,11 +122,12 @@ public class NetAPI {
 	* @param	handler		The handler we are adding to the packet
 	*/
 	public static void addHandler(NetPacket packet, NetPacketHandler handler) {
-		if(!handlers.containsKey(packet)) {
-			handlers.put(packet, new HashSet<NetPacketHandler>());
+		Class packetClass = packet.getClass();
+		if(!handlers.containsKey(packetClass)) {
+			handlers.put(packetClass, new HashSet<NetPacketHandler>());
 		}
 		
-		handlers.get(packet).add(handler);
+		handlers.get(packetClass).add(handler);
 	}
 	
 	/**
@@ -135,8 +137,9 @@ public class NetAPI {
 	* @param	handler		The handler we are deleting
 	*/
 	public static void removeHandler(NetPacket packet, NetPacketHandler handler) {
-		if(handlers.containsKey(packet)) {
-			HashSet<NetPacketHandler> set = handlers.get(packet);
+		Class packetClass = packet.getClass();
+		if(handlers.containsKey(packetClass)) {
+			HashSet<NetPacketHandler> set = handlers.get(packetClass);
 			
 			if(set.contains(handler)) {
 				set.remove(handler);
@@ -154,9 +157,23 @@ public class NetAPI {
 	* @param	packet 		Packer we are deleting all handlers for
 	*/
 	public static void removeAllHandlers(NetPacket packet) {
-		if(handlers.containsKey(packet)) {
-			handlers.remove(packet);
+		Class packetClass = packet.getClass();
+		if(handlers.containsKey(packetClass)) {
+			handlers.remove(packetClass);
 		}
+	}
+	
+	//============
+	// Client side only
+	//============
+	
+	/**
+	* Check if currently connected to a server
+	*
+	* @return	True if connected
+	*/
+	public static boolean isConnected() {
+		return (netThread != null);
 	}
 	
 	//============
@@ -180,5 +197,12 @@ public class NetAPI {
 		} else {
 			return new NetPacketThread(socket, mode);
 		}
+	}
+	
+	/**
+	* Called when disconnecting
+	*/
+	public static void onDisconnect() {
+		netThread = null;
 	}
 }

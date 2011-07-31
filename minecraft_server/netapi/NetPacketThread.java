@@ -4,6 +4,7 @@ import netapi.packet.NetPacket;
 import netapi.packet.NetP2PPacket;
 
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
@@ -169,36 +170,41 @@ public class NetPacketThread extends Thread {
 	*/
 	private void receiveNewPackets() {
 		log.warning("(NetAPI) Packet thread in receive mode");
-		Object	in;
+		Object	in = null;
 		
 		try {
-			while(alive && ((in = ois.readObject()) != null)) {
-				log.warning("(NetAPI) Packet received");
-				// P2P packets are ignored by the server
-				if(in instanceof NetP2PPacket) {
-					NetP2PPacket packet = (NetP2PPacket) in;
-					System.out.println("(NetAPI) Received a P2P Packet: " + packet.getClass().getName());
-					
-					processP2PPacket(packet);
-				// P2S packets are controlled by the server
-				} else if(in instanceof NetPacket) {
-					NetPacket packet = (NetPacket) in;
-					
-					NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
-					
-					for(NetPacketHandler handler : handlers) {
-						// To avoid a handler locking up the receiver thread
-						// We will shove them into a temporary thread
-						HandlerThread p = new HandlerThread(handler, packet);
-						p.start();
-						handler.handle(packet);
+			while(alive) {	
+				try {
+					in = ois.readObject();
+					log.warning("(NetAPI) Packet received");
+					// P2P packets are ignored by the server
+					if(in instanceof NetP2PPacket) {
+						NetP2PPacket packet = (NetP2PPacket) in;
+						log.warning("(NetAPI) Received a P2P Packet: " + packet.getClass().getName());
+						
+						processP2PPacket(packet);
+					// P2S packets are controlled by the server
+					} else if(in instanceof NetPacket) {
+						NetPacket packet = (NetPacket) in;
+						
+						NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
+						
+						for(NetPacketHandler handler : handlers) {
+							// To avoid a handler locking up the receiver thread
+							// We will shove them into a temporary thread
+							HandlerThread p = new HandlerThread(handler, packet);
+							p.start();
+							handler.handle(packet);
+						}
 					}
+				} catch (SocketTimeoutException e) {
+					// Ignore
 				}
 			}
 		} catch (IOException e) {
-			System.err.println("(NetAPI) IOException in receiving: " + e.getMessage());
+			log.warning("(NetAPI) IOException in receiving: " + e.getMessage());
 		} catch (ClassNotFoundException e) {
-			System.err.println("(NetAPI) Could not find class: " + e.getMessage());
+			log.warning("(NetAPI) Could not find class: " + e.getMessage());
 		}
 		
 		log.warning("(NetAPI) Packet thread receving stopped");
@@ -229,8 +235,12 @@ public class NetPacketThread extends Thread {
 		alive = false;
 		
 		try {
-			oos.close();
-			ois.close();
+			if(oos != null) {
+				oos.close();
+			}
+			if(ois != null) {
+				ois.close();
+			}
 		} catch (IOException e) {
 			// Why the hell is that being thrown here? Doesn't matter.
 		}

@@ -208,6 +208,8 @@ public class NetworkManager
 		if(netReceiveThread != null) {
 			netReceiveThread.stopThread();
 		}
+		
+		NetAPI.onDisconnect();
 		//=========
 		// -NetAPI
 		//=========

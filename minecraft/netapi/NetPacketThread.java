@@ -4,6 +4,7 @@ import netapi.packet.NetPacket;
 import netapi.packet.NetP2PPacket;
 
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
@@ -141,29 +142,30 @@ public class NetPacketThread extends Thread {
 		}
 	}
 	
-	/**
-	* Receive all new packets on the packet queue
-	*
-	* @since	0.1
-	*/
 	private void receiveNewPackets() {
-		Object	in;
+		System.out.println("(NetAPI) Packet thread in receive mode");
+		Object	in = null;
 		
 		try {
-			while(alive && ((in = ois.readObject()) != null)) {
-				if(in instanceof NetPacket) {
-					NetPacket packet = (NetPacket) in;
-					System.out.println("(NetAPI) Received a " + packet.getClass().getName() + " packet");
-					
-					NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
-					
-					for(NetPacketHandler handler : handlers) {
-						// To avoid a handler locking up the receiver thread
-						// We will shove them into a temporary thread
-						HandlerThread p = new HandlerThread(handler, packet);
-						p.start();
-						handler.handle(packet);
+			while(alive) {	
+				try {
+					in = ois.readObject();
+					System.out.println("(NetAPI) Packet received");
+					if(in instanceof NetPacket) {
+						NetPacket packet = (NetPacket) in;
+						
+						NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
+						
+						for(NetPacketHandler handler : handlers) {
+							// To avoid a handler locking up the receiver thread
+							// We will shove them into a temporary thread
+							HandlerThread p = new HandlerThread(handler, packet);
+							p.start();
+							handler.handle(packet);
+						}
 					}
+				} catch (SocketTimeoutException e) {
+					// Ignore
 				}
 			}
 		} catch (IOException e) {
@@ -171,6 +173,8 @@ public class NetPacketThread extends Thread {
 		} catch (ClassNotFoundException e) {
 			System.err.println("(NetAPI) Could not find class: " + e.getMessage());
 		}
+		
+		System.out.println("(NetAPI) Packet thread receving stopped");
 	}
 	
 	//===============
