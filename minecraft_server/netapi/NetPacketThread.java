@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Logger;
 
 /**
 * A thread that handles all packet handling
@@ -53,21 +54,29 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	private String				senderName;
+	/**
+	* The logger we are logging with
+	*
+	* @since	0.1
+	*/
+	private	Logger				log	= Logger.getLogger("Minecraft");
+	/**
+	* The socket we are connected to
+	*
+	* @since	0.1
+	*/
+	private Socket				socket;
 	
 	/**
 	* Called at creation of a new server
 	*
 	* @since	0.1
-	* @throws	IOException	When the packets can't be sent or received
 	* @param	socket		The socket we are connecte to
 	* @param	mode		True if a sender thread, false if receiver
 	*/
-	public NetPacketThread(Socket socket, boolean mode) throws IOException {
-		if(!mode) {
-			ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-		} else {
-			oos = new ObjectOutputStream(socket.getOutputStream());
-		}
+	public NetPacketThread(Socket socket, boolean mode){
+		sender = mode;
+		this.socket = socket;
 	}
 	
 	//===============
@@ -104,19 +113,32 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	public void run() {
-		while(alive) {
-			if(sender) {
-				sendNewPackets();
+		try {
+			if(!sender) {
+				ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 			} else {
-				receiveNewPackets();
+				oos = new ObjectOutputStream(socket.getOutputStream());
 			}
 			
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// Ignore
+			log.warning("(NetAPI) Packet thread opening");
+			while(alive) {
+				if(sender) {
+					sendNewPackets();
+				} else {
+					receiveNewPackets();
+				}
+				
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// Ignore
+				}
 			}
+		} catch (IOException e) {
+			log.warning("(NetAPI) IO Exception on data stream: " + e.getMessage());
 		}
+		
+		log.warning("(NetAPI) Closing packet thread");
 	}
 	
 	/**
@@ -126,6 +148,7 @@ public class NetPacketThread extends Thread {
 	*/
 	private void sendNewPackets() {
 		while(alive && (sendQueue.size() != 0)) {
+			log.warning("(NetAPI) Sending packet");
 			NetPacket send = sendQueue.peek();
 			try {
 				oos.writeObject(send);
@@ -142,10 +165,12 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	private void receiveNewPackets() {
+		log.warning("(NetAPI) Packet thread in receive mode");
 		Object	in;
 		
 		try {
 			while(alive && ((in = ois.readObject()) != null)) {
+				log.warning("(NetAPI) Packet received");
 				// P2P packets are ignored by the server
 				if(in instanceof NetP2PPacket) {
 					NetP2PPacket packet = (NetP2PPacket) in;
@@ -172,6 +197,8 @@ public class NetPacketThread extends Thread {
 		} catch (ClassNotFoundException e) {
 			System.err.println("(NetAPI) Could not find class: " + e.getMessage());
 		}
+		
+		log.warning("(NetAPI) Packet thread receving stopped");
 	}
 	
 	/**
@@ -195,6 +222,7 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	public void stopThread() {
+		log.warning("(NetAPI) Stopping net packet thread");
 		alive = false;
 		
 		try {

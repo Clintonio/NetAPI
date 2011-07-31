@@ -47,6 +47,12 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	private boolean				sender = true;
+	/**
+	* The socket we are connected to
+	*
+	* @since	0.1
+	*/
+	private Socket				socket;
 	
 	/**
 	* Called at creation of a new server
@@ -56,14 +62,9 @@ public class NetPacketThread extends Thread {
 	* @param	socket		The socket we are connecte to
 	* @param	mode		True if a sender thread, false if receiver
 	*/
-	public NetPacketThread(Socket socket, boolean mode) throws IOException {
-		if(!mode) {
-			System.out.println("(NetAPI) Creating Input Stream");
-			ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-		} else {
-			System.out.println("(NetAPI) Creating Output Stream");
-			oos = new ObjectOutputStream(socket.getOutputStream());
-		}
+	public NetPacketThread(Socket socket, boolean mode) {
+		sender = mode;
+		this.socket = socket;
 	}
 	
 	//===============
@@ -90,18 +91,31 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	public void run() {
-		while(alive) {
-			if(sender) {
-				sendNewPackets();
+		try {
+			if(!sender) {
+				System.out.println("(NetAPI) Creating Input Stream");
+				ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
 			} else {
-				receiveNewPackets();
+				System.out.println("(NetAPI) Creating Output Stream");
+				oos = new ObjectOutputStream(socket.getOutputStream());
 			}
 			
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				// Ignore
+			while(alive) {
+				if(sender) {
+					sendNewPackets();
+				} else {
+					receiveNewPackets();
+				}
+				
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// Ignore
+				}
 			}
+		} catch (IOException e) {
+			System.out.println("(NetAPI) IO Exception on data stream: " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 	

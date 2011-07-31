@@ -94,7 +94,6 @@ public class NetClientHandler extends NetHandler
 		System.out.println(" connected");
 		oos.flush();
 		oos.reset();
-		oos.close();
 	}
 
     public void processReadPackets()

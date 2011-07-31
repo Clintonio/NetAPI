@@ -13,6 +13,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.logging.Logger;
 //=========
 // -NetAPI
 //=========
@@ -32,7 +33,9 @@ public class NetworkManager
 	//=========
 	private NetPacketThread netSendThread;
 	private NetPacketThread netReceiveThread;
-	private String			username = "NONAME";
+	private Socket			netAPISocket;
+	private String			username 	= "NONAME";
+	private Logger			logger		= Logger.getLogger("Minecraft");
 	//=========
 	// -NetAPI
 	//=========
@@ -83,8 +86,16 @@ public class NetworkManager
 	* @param	socket		NetAPI Socket
 	*/
 	public void setNetAPISocket(Socket socket) throws IOException {
+		try {
+			socket.setSoTimeout(30000);
+			socket.setTrafficClass(24);
+		} catch(SocketException socketexception) {
+			System.err.println(socketexception.getMessage());
+		}
+		
 		netSendThread 		= NetAPI.getNewNetThread(socket, username, true);
 		netReceiveThread	= NetAPI.getNewNetThread(socket, username, false);
+		netAPISocket		= socket;
 		netSendThread.start();
 		netReceiveThread.start();
 	}
@@ -229,9 +240,12 @@ public class NetworkManager
 		// +NetAPI
 		//=========
 		if(netSendThread != null) {
+			logger.warning("(NetAPI) Player " + username + " disconnecting");
 			netSendThread.stopThread();
 			netReceiveThread.stopThread();
-			
+			try {
+				netAPISocket.close();
+			} catch (Exception e) { }
 			NetAPI.playerDisconnected(username);
 		}
 		//=========

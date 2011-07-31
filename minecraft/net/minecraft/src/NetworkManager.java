@@ -203,6 +203,9 @@ public class NetworkManager
 		//=========
 		if(netSendThread != null) {
 			netSendThread.stopThread();
+		} 
+		
+		if(netReceiveThread != null) {
 			netReceiveThread.stopThread();
 		}
 		//=========
