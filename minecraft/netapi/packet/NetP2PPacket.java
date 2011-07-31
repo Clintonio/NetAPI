@@ -22,9 +22,7 @@ public class NetP2PPacket extends NetPacket {
 	* @param	packet		Packet to send
 	*/
 	public NetP2PPacket(String username, NetPacket packet) {
-		recipients 		= new String[1];
-		recipients[0] 	= username;
-		payload 		= packet;
+		this(username, packet, "");
 	}
 	
 	/**
@@ -35,9 +33,26 @@ public class NetP2PPacket extends NetPacket {
 	* @param	packet		Packet to send
 	*/
 	public NetP2PPacket(String[] recipients, NetPacket packet) {
+		super();
 		this.recipients = recipients;
 		payload = packet;
 	}
+	
+	/**
+	* Create a P2P packet with a mod ID
+	*
+	* @since	0.1
+	* @param	username	Player to send to
+	* @param	packet		Packet to send
+	* @param	id			Mod ID
+	*/
+	protected NetP2PPacket(String username, NetPacket packet, String id) {
+		super(id);
+		recipients 		= new String[1];
+		recipients[0] 	= username;
+		payload 		= packet;
+	}
+	
 	
 	/**
 	* Set the sender, which occurs on the server

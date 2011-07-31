@@ -18,6 +18,7 @@ public class UsernamePacket extends NetPacket {
 	* @param	name		Username to send
 	*/
 	public UsernamePacket(String name) {
+		super();
 		username = name;
 	}
 }
