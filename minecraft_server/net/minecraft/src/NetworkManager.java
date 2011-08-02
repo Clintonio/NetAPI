@@ -109,6 +109,7 @@ public class NetworkManager
 	* @param	username	Username
 	*/
 	public void setUsername(String username) {
+		logger.info("(NetAPI) Network manager assigned to " + username);
 		this.username = username;
 	}
 	

@@ -253,7 +253,9 @@ public class NetAPI {
 	* @param	username	Username that is receiving new packet threads
 	*/
 	public static NetPacketThread getNewNetThread(Socket socket, String username, ObjectInputStream ois) {
-		return new NetPacketThread(socket, ois);
+		NetPacketThread netThread = new NetPacketThread(socket, ois);
+		netThread.setSenderName(username);
+		return netThread;
 	}
 	
 	/**
