@@ -24,6 +24,13 @@ public abstract class NetPacket implements Serializable {
 	* @since	0.1
 	*/
 	private long		timestamp;
+	/**
+	* The sender of the packet, set on the
+	* server
+	*
+	* @since	0.1
+	*/
+	private String		sender		= "";
 	
 	/**
 	* Create a standard packet
@@ -55,6 +62,25 @@ public abstract class NetPacket implements Serializable {
 	*/
 	public long getTimestamp() {
 		return timestamp;
+	}
+	
+	/**
+	* Set the sender, which occurs on the server
+	*
+	* @since	0.1
+	* @param	sender		Sender of this packet
+	*/
+	public void setSender(String sender) {
+		this.sender = sender;
+	}
+	
+	/**
+	* Get the sender
+	*
+	* @return	Sender
+	*/
+	public String getSender() {
+		return sender;
 	}
 	
 	/**

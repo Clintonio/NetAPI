@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 //=========
 import netapi.NetAPI;
 import netapi.packet.UsernamePacket;
+import netapi.client.NetConnectThread;
 //=========
 // -NetAPI
 //=========
@@ -61,40 +62,13 @@ public class NetClientHandler extends NetHandler
 		//=========
 		// +NetAPI
 		//=========
-		// Create second, identical, port for sending data for the
-		// NetAPI data
-		System.out.println("(NetAPI) Connecting to " + InetAddress.getByName(s) + ":" + (i - 1));
-        Socket netAPISocket = new Socket(InetAddress.getByName(s), i - 1);
-		System.out.println("(NetAPI) Setting network management");
-		sendUsernamePacket(netAPISocket, minecraft.session.username);
-		try {
-			netManager.setNetAPISocket(netAPISocket);
-		} catch (IOException e) {
-			System.out.println("(NetAPI) Connection failed: " + e.getMessage());
-		}
+		String user = minecraft.session.username;
+		NetConnectThread con = new NetConnectThread(netManager, InetAddress.getByName(s), i - 1, user);
+		con.start();
 		//=========
 		// -NetAPI
 		//=========
     }
-	
-	/**
-	* Send the username packet separate to the other 
-	* packets
-	*
-	* @throws	IOException	If something fails
-	* @param	socket		Socket to use
-	* @param	username	NAme of user to send
-	*/
-	private void sendUsernamePacket(Socket socket, String username)
-		throws IOException {
-		ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-		// Login with username 
-		System.out.print("(NetAPI) Logging into server with username " + username + " ...");
-		oos.writeObject(new UsernamePacket(username));
-		System.out.println(" connected");
-		oos.flush();
-		oos.reset();
-	}
 
     public void processReadPackets()
     {

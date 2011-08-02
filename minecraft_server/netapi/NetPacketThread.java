@@ -33,13 +33,13 @@ public class NetPacketThread extends Thread {
 	*
 	* @since	0.1
 	*/
-	private ObjectOutputStream	oos;
+	private ObjectOutputStream	oos		= null;
 	/**
 	* The input stream for this thread
 	*
 	* @since	0.1
 	*/
-	private ObjectInputStream	ois;
+	private ObjectInputStream	ois		= null;
 	/**
 	* Whether this current thread is alive
 	*
@@ -75,12 +75,41 @@ public class NetPacketThread extends Thread {
 	* Called at creation of a new server
 	*
 	* @since	0.1
+	* @throws	IOException	If cannot connect data stream
 	* @param	socket		The socket we are connecte to
 	* @param	mode		True if a sender thread, false if receiver
 	*/
-	public NetPacketThread(Socket socket, boolean mode){
-		sender = mode;
+	public NetPacketThread(Socket socket, boolean mode) {
+		sender 		= mode;
 		this.socket = socket;
+	}
+	
+	/**
+	* Called at creation of a new server
+	*
+	* @since	0.1
+	* @param	socket		The socket we are connecte to
+	* @param	oos			The sending data stream
+	* @param	mode		True if a sender thread, false if receiver
+	*/
+	public NetPacketThread(Socket socket, ObjectOutputStream oos) {
+		sender 		= true;
+		this.socket = socket;
+		this.oos	= oos;	
+	}
+	
+	/**
+	* Called at creation of a new server
+	*
+	* @since	0.1
+	* @param	socket		The socket we are connecte to
+	* @param	ois			The receiving data stream
+	* @param	mode		True if a sender thread, false if receiver
+	*/
+	public NetPacketThread(Socket socket, ObjectInputStream ois) {
+		sender 		= false;
+		this.socket = socket;
+		this.ois	= ois;
 	}
 	
 	//===============
@@ -118,13 +147,14 @@ public class NetPacketThread extends Thread {
 	*/
 	public void run() {
 		try {
-			if(!sender) {
+			if(!sender && (ois == null)) {
+				log.info("(NetAPI) Packet reading thread opening");
 				ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-			} else {
+			} else if(sender && (oos == null)) {
+				log.info("(NetAPI) Packet writing thread opening");
 				oos = new ObjectOutputStream(socket.getOutputStream());
 			}
 			
-			log.warning("(NetAPI) Packet thread opening");
 			while(alive) {
 				if(sender) {
 					sendNewPackets();
@@ -138,11 +168,12 @@ public class NetPacketThread extends Thread {
 					// Ignore
 				}
 			}
+			
 		} catch (IOException e) {
-			log.warning("(NetAPI) IO Exception on data stream: " + e.getMessage());
+			log.info("(NetAPI) Connection failed to stream " + e.getMessage());
 		}
 		
-		log.warning("(NetAPI) Closing packet thread");
+		log.info("(NetAPI) Closing packet thread");
 	}
 	
 	/**
@@ -152,7 +183,7 @@ public class NetPacketThread extends Thread {
 	*/
 	private void sendNewPackets() {
 		while(alive && (sendQueue.size() != 0)) {
-			log.warning("(NetAPI) Sending packet");
+			log.info("(NetAPI) Sending packet");
 			NetPacket send = sendQueue.peek();
 			try {
 				oos.writeObject(send);
@@ -169,45 +200,55 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	private void receiveNewPackets() {
-		log.warning("(NetAPI) Packet thread in receive mode");
+		log.info("(NetAPI) Packet thread in receive mode");
 		Object	in = null;
 		
 		try {
 			while(alive) {	
 				try {
 					in = ois.readObject();
-					log.warning("(NetAPI) Packet received");
+					log.info("(NetAPI) Packet received");
 					// P2P packets are ignored by the server
 					if(in instanceof NetP2PPacket) {
 						NetP2PPacket packet = (NetP2PPacket) in;
-						log.warning("(NetAPI) Received a P2P Packet: " + packet.getClass().getName());
+						log.info("(NetAPI) Received a P2P Packet: " + packet.getClass().getName());
 						
 						processP2PPacket(packet);
 					// P2S packets are controlled by the server
 					} else if(in instanceof NetPacket) {
 						NetPacket packet = (NetPacket) in;
 						
-						NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
-						
-						for(NetPacketHandler handler : handlers) {
-							// To avoid a handler locking up the receiver thread
-							// We will shove them into a temporary thread
-							HandlerThread p = new HandlerThread(handler, packet);
-							p.start();
-							handler.handle(packet);
-						}
+						processPacket(packet);
 					}
 				} catch (SocketTimeoutException e) {
 					// Ignore
 				}
 			}
 		} catch (IOException e) {
-			log.warning("(NetAPI) IOException in receiving: " + e.getMessage());
+			log.info("(NetAPI) IOException in receiving: " + e.getMessage());
 		} catch (ClassNotFoundException e) {
-			log.warning("(NetAPI) Could not find class: " + e.getMessage());
+			log.info("(NetAPI) Could not find class: " + e.getMessage());
 		}
 		
-		log.warning("(NetAPI) Packet thread receving stopped");
+		log.info("(NetAPI) Packet thread receving stopped");
+	}
+	
+	/**
+	* Process a regular packet
+	*
+	* @param	packet	Packet to handle
+	*/
+	private void processPacket(NetPacket packet) {	
+		packet.setSender(senderName);					
+		NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
+		
+		for(NetPacketHandler handler : handlers) {
+			// To avoid a handler locking up the receiver thread
+			// We will shove them into a temporary thread
+			HandlerThread p = new HandlerThread(handler, packet);
+			p.start();
+			handler.handle(packet);
+		}
 	}
 	
 	/**
@@ -231,7 +272,7 @@ public class NetPacketThread extends Thread {
 	* @since	0.1
 	*/
 	public void stopThread() {
-		log.warning("(NetAPI) Stopping net packet thread");
+		log.info("(NetAPI) Stopping net packet thread");
 		alive = false;
 		
 		try {

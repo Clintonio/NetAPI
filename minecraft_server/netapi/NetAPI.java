@@ -4,6 +4,8 @@ import netapi.packet.NetPacket;
 import netapi.packet.NetP2PPacket;
 
 import java.net.Socket;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.HashSet;
@@ -72,10 +74,8 @@ public class NetAPI {
 	* @param	players		The players to send the packet to
 	*/
 	public static void sendPacketToPlayers(NetPacket packet, EntityPlayer[] players) {
-		String username;
-		
 		for(int x = 0; x < players.length; x++) {
-			sendPacketToPlayer(packet, players[x]);
+			sendPacketToPlayer(packet, players[x].username);
 		}
 	}
 	
@@ -87,6 +87,31 @@ public class NetAPI {
 	*/
 	public static void sendPacketToPlayers(NetPacket packet, Collection<EntityPlayer> players) {
 		sendPacketToPlayers(packet, players.toArray(new EntityPlayer[players.size()]));
+	}	
+	/**
+	* Sends a packet to a specific player
+	*
+	* @param	packet		The packet to send
+	* @param	username	Player to send packet to
+	*/
+	public static void sendPacketToPlayer(NetPacket packet, String username) {
+		NetPacketThread t; 
+		// Check if the user exists
+		if((username != null) && ((t = netSendThreads.get(username)) != null)) {
+			t.send(packet);
+		}
+	}
+	
+	/**
+	* Send a packet to many players
+	*
+	* @param	packet		The packet to send
+	* @param	players		The players to send the packet to
+	*/
+	public static void sendPacketToPlayers(NetPacket packet, String[] players) {
+		for(int x = 0; x < players.length; x++) {
+			sendPacketToPlayer(packet, players[x]);
+		}
 	}
 	
 	/**
@@ -200,6 +225,35 @@ public class NetAPI {
 		} else {
 			return new NetPacketThread(socket, mode);
 		}
+	}
+	
+	/**
+	* Create and set a new net thread when connecting
+	* to a new server. Not a part of the API.
+	*
+	* @since	0.1
+	* @param	socket		Socket connected to
+	* @param	oos			Data sending stream
+	* @param	username	Username that is sending new packet threads
+	*/
+	public static NetPacketThread getNewNetThread(Socket socket, String username, ObjectOutputStream oos) {
+		NetPacketThread netThread = new NetPacketThread(socket, oos);
+		netThread.setSenderName(username);
+		netSendThreads.put(username, netThread);
+		return netThread;
+	}
+	
+	/**
+	* Create and set a new net thread when connecting
+	* to a new server. Not a part of the API.
+	*
+	* @since	0.1
+	* @param	socket		Socket connected to
+	* @param	ois			Data sending stream
+	* @param	username	Username that is receiving new packet threads
+	*/
+	public static NetPacketThread getNewNetThread(Socket socket, String username, ObjectInputStream ois) {
+		return new NetPacketThread(socket, ois);
 	}
 	
 	/**

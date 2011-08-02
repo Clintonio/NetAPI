@@ -4,6 +4,8 @@ import netapi.packet.NetPacket;
 import netapi.packet.NetP2PPacket;
 
 import java.net.Socket;
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.util.Hashtable;
 import java.util.HashSet;
@@ -197,6 +199,32 @@ public class NetAPI {
 		} else {
 			return new NetPacketThread(socket, mode);
 		}
+	}
+	
+	/**
+	* Create and set a new net thread when connecting
+	* to a new server. Not a part of the API.
+	*
+	* @since	0.1
+	* @param	oos			Data sending stream
+	* @param	username	Username that is sending new packet threads
+	*/
+	public static NetPacketThread getNewNetThread(Socket socket, ObjectOutputStream oos) {
+		netThread = new NetPacketThread(socket, oos);
+	
+		return netThread;
+	}
+	
+	/**
+	* Create and set a new net thread when connecting
+	* to a new server. Not a part of the API.
+	*
+	* @since	0.1
+	* @param	ois			Data sending stream
+	* @param	username	Username that is receiving new packet threads
+	*/
+	public static NetPacketThread getNewNetThread(Socket socket, ObjectInputStream ois) {
+		return new NetPacketThread(socket, ois);
 	}
 	
 	/**

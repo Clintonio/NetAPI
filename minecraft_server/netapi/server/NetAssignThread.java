@@ -4,6 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.net.Socket;
 import java.util.Map;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.SocketException;
 
 import net.minecraft.server.MinecraftServer;
@@ -21,10 +22,13 @@ import net.minecraft.src.NetworkManager;
 public class NetAssignThread extends Thread {
 	/**
 	* Current player pool
+	* Index 0 = Socket
+	* Index 1 = Object input stream. 
+	* Hacked due to Java's lack of tuples
 	*
 	* @since	0.1
 	*/
-	private ConcurrentHashMap<String, Socket> playerTable = new ConcurrentHashMap<String, Socket>();
+	private ConcurrentHashMap<String, Object[]> playerTable = new ConcurrentHashMap<String, Object[]>();
 	/**
 	* True while alive
 	*
@@ -54,9 +58,12 @@ public class NetAssignThread extends Thread {
 	* @since	0.1
 	* @param	username	Username we are adding
 	* @param	socket		Socket for given username
+	* @param	ois			Object input stream for the given
+	* 						user and socket
 	*/
-	public void assign(String username, Socket socket) {
-		playerTable.put(username, socket);
+	public void assign(String username, Socket socket, ObjectInputStream ois) {
+		Object[] store = { socket, ois };
+		playerTable.put(username, store);
 	}
 	
 	/**
@@ -75,36 +82,47 @@ public class NetAssignThread extends Thread {
 	* @since	0.1
 	*/
 	private void updateAllUsers() {
-		//mcServer.logger.warning("(NetAPI) Updating all users...");
-		EntityPlayerMP 	player;
-		String 			name;
-		Socket 			sock;
 		// Scan over each current attempted login 
 		// If the login matches a player, st them up
 		// to be able to send net commands.
-		for(Map.Entry<String, Socket> entry : playerTable.entrySet()) {
-			name = entry.getKey();
-			sock = entry.getValue();
+		for(Map.Entry<String, Object[]> entry : playerTable.entrySet()) {
+			EntityPlayerMP		player;
+			String				name 	= entry.getKey();
+			Object[] 			store 	= entry.getValue();
+			Socket				sock	= (Socket) store[0];
+			ObjectInputStream	ois		= (ObjectInputStream) store[1];
+			
 			mcServer.logger.warning("(NetAPI) Checking player " + name);
 			if((player = getPlayer(name)) != null) {
-				mcServer.logger.warning("(NetAPI) Found user " + name + " in player list and table");
-				NetworkManager netMan = player.playerNetServerHandler.netManager;
-				mcServer.logger.warning("(NetAPI) " + netMan.getSocketAddress() + " == " + sock.getInetAddress());
-				// Check if they are from same address, if not, remove the
-				// player in case of a mix up/ hack (n.b: this is integrity code)
-				if(netMan.getSocketAddress().equals(sock.getInetAddress())) {
-					mcServer.logger.warning("(NetAPI) Found full user, adding to net manager");
-					try {
-						netMan.setUsername(name);
-						netMan.setNetAPISocket(sock);
-					} catch (IOException e) {
-						System.out.println("(NetAPI) Could not connect player " + name);
-					}
-				} 
+				addNewPlayer(player, name, sock, ois);
 				playerTable.remove(name);
 			}
 		}
-		//mcServer.logger.warning("(NetAPI) Finished updating all users");
+	}
+	
+	/**
+	* Add a new user to the player list if they are valid
+	*
+	* @since	0.1
+	* @param	name		Name of player
+	* @param	sock		Socket connecting to
+	* @param	ois			Input stream for player
+	*/
+	private void addNewPlayer(EntityPlayerMP player, String name, 
+							  Socket sock, ObjectInputStream ois) {
+		NetworkManager netMan = player.playerNetServerHandler.netManager;
+		
+		// Check if they are from same address, if not, remove the
+		// player in case of a mix up/ hack (n.b: this is integrity code)
+		if(netMan.getSocketAddress().equals(sock.getInetAddress())) {
+			mcServer.logger.warning("(NetAPI) Authenticated " + name);
+			try {
+				netMan.setUsername(name);
+				netMan.setNetAPISocket(sock, ois);
+			} catch (IOException e) {
+				System.out.println("(NetAPI) Could not connect player " + name);
+			}
+		} 
 	}
 	
 	/**

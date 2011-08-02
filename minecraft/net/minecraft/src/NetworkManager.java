@@ -77,10 +77,11 @@ public class NetworkManager
 	* @throws	IOException	In the case where a connection fails.
 	* @since	0.1
 	* @param	socket		NetAPI Socket
+	* @param	oos			Output stream for socket
 	*/
-	public void setNetAPISocket(Socket socket) throws IOException {
+	public void setNetAPISocket(Socket socket, ObjectOutputStream oos) throws IOException {
 		System.out.println("(NetAPI) Creating packet threads");
-		netSendThread 		= NetAPI.getNewNetThread(socket, true);
+		netSendThread 		= NetAPI.getNewNetThread(socket, oos);
 		netReceiveThread	= NetAPI.getNewNetThread(socket, false);
 		System.out.println("(NetAPI) Starting packet threads");
 		netSendThread.start();
@@ -210,6 +211,8 @@ public class NetworkManager
 		}
 		
 		NetAPI.onDisconnect();
+		
+		System.out.println("(NetAPI) Disconnected");
 		//=========
 		// -NetAPI
 		//=========

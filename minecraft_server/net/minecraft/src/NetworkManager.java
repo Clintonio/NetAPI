@@ -84,8 +84,10 @@ public class NetworkManager
 	* @throws	IOException	Upon failure to connect
 	* @since	0.1
 	* @param	socket		NetAPI Socket
+	* @param	ois			Input stream for socket
 	*/
-	public void setNetAPISocket(Socket socket) throws IOException {
+	public void setNetAPISocket(Socket socket, ObjectInputStream ois) 
+		throws IOException {
 		try {
 			socket.setSoTimeout(30000);
 			socket.setTrafficClass(24);
@@ -94,7 +96,7 @@ public class NetworkManager
 		}
 		
 		netSendThread 		= NetAPI.getNewNetThread(socket, username, true);
-		netReceiveThread	= NetAPI.getNewNetThread(socket, username, false);
+		netReceiveThread	= NetAPI.getNewNetThread(socket, username, ois);
 		netAPISocket		= socket;
 		netSendThread.start();
 		netReceiveThread.start();

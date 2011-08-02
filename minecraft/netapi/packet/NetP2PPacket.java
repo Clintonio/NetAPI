@@ -12,7 +12,6 @@ package netapi.packet;
 public class NetP2PPacket extends NetPacket {
 	private String[] 	recipients;
 	private NetPacket 	payload;
-	private String		sender;
 	
 	/**
 	* Create a packet with the given user as the receipient
@@ -51,26 +50,6 @@ public class NetP2PPacket extends NetPacket {
 		recipients 		= new String[1];
 		recipients[0] 	= username;
 		payload 		= packet;
-	}
-	
-	
-	/**
-	* Set the sender, which occurs on the server
-	*
-	* @since	0.1
-	* @param	sender		Sender of this packet
-	*/
-	public void setSender(String sender) {
-		this.sender = sender;
-	}
-	
-	/**
-	* Get the sender
-	*
-	* @return	Sender
-	*/
-	public String getSender() {
-		return sender;
 	}
 	
 	/**

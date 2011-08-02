@@ -51,7 +51,7 @@ public class NetListenThread extends Thread {
 	* @since	0.1
 	*/
 	public NetListenThread(ServerSocket sock, MinecraftServer server) {
-		server.logger.warning("(NetAPI) NetAPI Server Started");
+		server.logger.info("(NetAPI) NetAPI Server Started");
 		mcServer 		= server;
 		netAPISocket	= sock;
 		assignThread	= new NetAssignThread(server);
@@ -70,13 +70,21 @@ public class NetListenThread extends Thread {
 	* @param	socket		Socket being accepted
 	*/
 	private void processUser(Socket socket) {	
-		mcServer.logger.warning("(NetAPI) Finding the name of the connected user");
-		String username = getUsername(socket);
+		mcServer.logger.info("(NetAPI) Finding the name of the connected user");
+		mcServer.logger.info("(NetAPI) Creating input stream");
 		
-		if(username instanceof String) {
-			assignThread.assign(username, socket);
-		} else {
-			mcServer.logger.warning("(NetAPI) No username, disconnecting user");
+		try {
+			ObjectInputStream  ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
+			mcServer.logger.info("(NetAPI) Attempting to read name packet");
+			String username = getUsername(ois);
+			
+			if(username instanceof String) {
+				assignThread.assign(username, socket, ois);
+			} else {
+				mcServer.logger.info("(NetAPI) No username, disconnecting user");
+			}
+		} catch (IOException e) {
+			mcServer.logger.info("(NetAPI) Input stream failed; " + e.getMessage());
 		}
 	}
 	
@@ -87,28 +95,23 @@ public class NetListenThread extends Thread {
 	* @since	0.1
 	* @return	A found username
 	*/
-	private String getUsername(Socket socket) {
+	private String getUsername(ObjectInputStream  ois) {
 		try {
-			mcServer.logger.warning("(NetAPI) Creating input stream");
-			ObjectInputStream  ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-			mcServer.logger.warning("(NetAPI) Attempting to read name packet");
 			Object in = ois.readObject();
 			
 			if(in instanceof UsernamePacket) {
 				UsernamePacket u = (UsernamePacket) in;
-				mcServer.logger.warning("(NetAPI) Username: " + u.username + " found");
+				mcServer.logger.info("(NetAPI) Username: " + u.username + " found");
 				return u.username;
 			} else if(in instanceof Object) {
-				mcServer.logger.warning("(NetAPI) Received: " + in.getClass().getName());
+				mcServer.logger.info("(NetAPI) Received: " + in.getClass().getName());
 			} else {
-				mcServer.logger.warning("(NetAPI) Received null");
+				mcServer.logger.info("(NetAPI) Received null");
 			}
-			
-			ois.reset();
 		} catch (IOException e) {
-			mcServer.logger.warning("(NetAPI) IOException: " + e.getMessage());
+			mcServer.logger.info("(NetAPI) IOException: " + e.getMessage());
 		} catch (ClassNotFoundException e) {
-			mcServer.logger.warning("(NetAPI) Could not find class: " + e.getMessage());
+			mcServer.logger.info("(NetAPI) Could not find class: " + e.getMessage());
 		}
 		
 		return null;
@@ -120,7 +123,7 @@ public class NetListenThread extends Thread {
 	* @since	0.1
 	*/
 	public void run() {
-		mcServer.logger.warning("(NetAPI) Listening for NetAPI connections");
+		mcServer.logger.info("(NetAPI) Listening for NetAPI connections");
 		assignThread.start();
 		while(alive) {
 			try {

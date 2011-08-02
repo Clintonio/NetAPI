@@ -32,13 +32,13 @@ public class NetPacketThread extends Thread {
 	*
 	* @since	0.1
 	*/
-	private ObjectOutputStream	oos;
+	private ObjectOutputStream	oos		= null;
 	/**
 	* The input stream for this thread
 	*
 	* @since	0.1
 	*/
-	private ObjectInputStream	ois;
+	private ObjectInputStream	ois		= null;
 	/**
 	* Whether this current thread is alive
 	*
@@ -62,13 +62,40 @@ public class NetPacketThread extends Thread {
 	* Called at creation of a new server
 	*
 	* @since	0.1
-	* @throws	IOException	When the packets can't be sent or received
 	* @param	socket		The socket we are connecte to
 	* @param	mode		True if a sender thread, false if receiver
 	*/
 	public NetPacketThread(Socket socket, boolean mode) {
-		sender = mode;
+		sender 		= mode;
 		this.socket = socket;
+	}
+	
+	/**
+	* Called at creation of a new server
+	*
+	* @since	0.1
+	* @param	socket		The socket we are connecte to
+	* @param	oos			The sending data stream
+	* @param	mode		True if a sender thread, false if receiver
+	*/
+	public NetPacketThread(Socket socket, ObjectOutputStream oos) {
+		sender 		= true;
+		this.socket = socket;
+		this.oos	= oos;	
+	}
+	
+	/**
+	* Called at creation of a new server
+	*
+	* @since	0.1
+	* @param	socket		The socket we are connecte to
+	* @param	ois			The receiving data stream
+	* @param	mode		True if a sender thread, false if receiver
+	*/
+	public NetPacketThread(Socket socket, ObjectInputStream ois) {
+		sender 		= false;
+		this.socket = socket;
+		this.ois	= ois;
 	}
 	
 	//===============
@@ -79,6 +106,7 @@ public class NetPacketThread extends Thread {
 	* Send the given packet
 	*
 	* @since	0.1
+	* @throws	IOException	If cannot connect data stream
 	* @param	packet	New packet to send
 	*/
 	public void send(NetPacket packet) {
@@ -96,11 +124,11 @@ public class NetPacketThread extends Thread {
 	*/
 	public void run() {
 		try {
-			if(!sender) {
-				System.out.println("(NetAPI) Creating Input Stream");
+			if(!sender && (ois == null)) {
+				System.out.println("(NetAPI) Starting Input Stream");
 				ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-			} else {
-				System.out.println("(NetAPI) Creating Output Stream");
+			} else if(sender && (oos == null)) {
+				System.out.println("(NetAPI) Starting Output Stream");
 				oos = new ObjectOutputStream(socket.getOutputStream());
 			}
 			
@@ -116,11 +144,12 @@ public class NetPacketThread extends Thread {
 				} catch (InterruptedException e) {
 					// Ignore
 				}
-			}
+			}	
 		} catch (IOException e) {
-			System.out.println("(NetAPI) IO Exception on data stream: " + e.getMessage());
-			e.printStackTrace();
+			System.out.println("(NetAPI) Connection failed to stream " + e.getMessage());
 		}
+		
+		System.out.println("(NetAPI) Closing packet thread");
 	}
 	
 	/**
@@ -154,15 +183,7 @@ public class NetPacketThread extends Thread {
 					if(in instanceof NetPacket) {
 						NetPacket packet = (NetPacket) in;
 						
-						NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
-						
-						for(NetPacketHandler handler : handlers) {
-							// To avoid a handler locking up the receiver thread
-							// We will shove them into a temporary thread
-							HandlerThread p = new HandlerThread(handler, packet);
-							p.start();
-							handler.handle(packet);
-						}
+						processPacket(packet);
 					}
 				} catch (SocketTimeoutException e) {
 					// Ignore
@@ -175,6 +196,23 @@ public class NetPacketThread extends Thread {
 		}
 		
 		System.out.println("(NetAPI) Packet thread receving stopped");
+	}
+	
+	/**
+	* Process a regular packet
+	*
+	* @param	packet	Packet to handle
+	*/
+	private void processPacket(NetPacket packet) {					
+		NetPacketHandler[] handlers = NetAPI.getHandlers(packet);
+		
+		for(NetPacketHandler handler : handlers) {
+			// To avoid a handler locking up the receiver thread
+			// We will shove them into a temporary thread
+			HandlerThread p = new HandlerThread(handler, packet);
+			p.start();
+			handler.handle(packet);
+		}
 	}
 	
 	//===============
