@@ -31,11 +31,7 @@ public class NetworkManager
 	//=========
 	// +NetAPI
 	//=========
-	private NetPacketThread netSendThread;
-	private NetPacketThread netReceiveThread;
-	private Socket			netAPISocket;
 	private String			username 	= "NONAME";
-	private Logger			logger		= Logger.getLogger("Minecraft");
 	//=========
 	// -NetAPI
 	//=========
@@ -79,48 +75,13 @@ public class NetworkManager
 	// +NetAPI
 	//=========
 	/**
-	* Set the socket for the netAPI
-	*
-	* @throws	IOException	Upon failure to connect
-	* @since	0.1
-	* @param	socket		NetAPI Socket
-	* @param	ois			Input stream for socket
-	*/
-	public void setNetAPISocket(Socket socket, ObjectInputStream ois) 
-		throws IOException {
-		try {
-			socket.setSoTimeout(30000);
-			socket.setTrafficClass(24);
-		} catch(SocketException socketexception) {
-			System.err.println(socketexception.getMessage());
-		}
-		
-		netSendThread 		= NetAPI.getNewNetThread(socket, username, true);
-		netReceiveThread	= NetAPI.getNewNetThread(socket, username, ois);
-		netAPISocket		= socket;
-		netSendThread.start();
-		netReceiveThread.start();
-	}
-	
-	/**
 	* Set the username for the current network manager
 	*
 	* @since	0.1
 	* @param	username	Username
 	*/
 	public void setUsername(String username) {
-		logger.info("(NetAPI) Network manager assigned to " + username);
 		this.username = username;
-	}
-	
-	/**
-	* Get the inetaddress for the socket
-	*
-	* @since	0.1
-	* @return	INetaddress for socket
-	*/
-	public InetAddress getSocketAddress() {
-		return networkSocket.getInetAddress();
 	}
 	//=========
 	// -NetAPI
@@ -242,15 +203,7 @@ public class NetworkManager
 		//=========
 		// +NetAPI
 		//=========
-		if(netSendThread != null) {
-			logger.warning("(NetAPI) Player " + username + " disconnecting");
-			netSendThread.stopThread();
-			netReceiveThread.stopThread();
-			try {
-				netAPISocket.close();
-			} catch (Exception e) { }
-			NetAPI.playerDisconnected(username);
-		}
+		NetAPI.playerDisconnected(username);
 		//=========
 		// -NetAPI
 		//=========

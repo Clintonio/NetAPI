@@ -3,6 +3,8 @@ package netapi;
 import netapi.packet.NetPacket;
 import netapi.packet.NetP2PPacket;
 
+import netapi.server.NetAssignThread;
+
 import java.net.Socket;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
@@ -51,6 +53,12 @@ public class NetAPI {
 	* @since	0.1
 	*/
 	private static MinecraftServer server;
+	/**
+	* The thread for managing and assigning players
+	*
+	* @since	0.1
+	*/
+	private static NetAssignThread assignThread;
 	
 	//===================
 	// Packet methods
@@ -297,6 +305,7 @@ public class NetAPI {
 	public static void playerDisconnected(String username) {
 		if(netSendThreads.containsKey(username)) {
 			netSendThreads.remove(username);
+			assignThread.playerDisconnected(username);
 		}
 	}
 	
@@ -312,5 +321,15 @@ public class NetAPI {
 		} else {
 			NetAPI.server = server;
 		}
+	}
+	
+	/**
+	* Set the assignment thread
+	*
+	* @since	0.1
+	* @param	assign	Assignment thread
+	*/
+	public static void setPlayerThread(NetAssignThread assign) {
+		assignThread = assign;
 	}
 }

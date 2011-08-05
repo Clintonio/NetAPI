@@ -1,5 +1,7 @@
 package netapi.server;
 
+import netapi.NetAPI;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.ObjectInputStream;
@@ -53,6 +55,7 @@ public class NetListenThread extends Thread {
 		log.info("(NetAPI) NetAPI Server Started");
 		netAPISocket	= sock;
 		assignThread	= new NetAssignThread();
+		NetAPI.setPlayerThread(assignThread);
 		
 		try {
 			netAPISocket.setSoTimeout(150);
@@ -143,6 +146,6 @@ public class NetListenThread extends Thread {
 	*/
 	public void stopThread() {
 		alive = false;
-		assignThread.stop();
+		assignThread.stopThread();
 	}
 }
