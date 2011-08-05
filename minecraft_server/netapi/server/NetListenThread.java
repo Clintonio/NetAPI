@@ -50,7 +50,7 @@ public class NetListenThread extends Thread {
 	* @since	0.1
 	*/
 	public NetListenThread(ServerSocket sock) {
-		log.logger.info("(NetAPI) NetAPI Server Started");
+		log.info("(NetAPI) NetAPI Server Started");
 		netAPISocket	= sock;
 		assignThread	= new NetAssignThread(server);
 		
@@ -68,21 +68,21 @@ public class NetListenThread extends Thread {
 	* @param	socket		Socket being accepted
 	*/
 	private void processUser(Socket socket) {	
-		log.logger.info("(NetAPI) Finding the name of the connected user");
-		log.logger.info("(NetAPI) Creating input stream");
+		log.info("(NetAPI) Finding the name of the connected user");
+		log.info("(NetAPI) Creating input stream");
 		
 		try {
 			ObjectInputStream  ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-			log.logger.info("(NetAPI) Attempting to read name packet");
+			log.info("(NetAPI) Attempting to read name packet");
 			String username = getUsername(ois);
 			
 			if(username instanceof String) {
 				assignThread.assign(username, socket, ois);
 			} else {
-				log.logger.info("(NetAPI) No username, disconnecting user");
+				log.info("(NetAPI) No username, disconnecting user");
 			}
 		} catch (IOException e) {
-			log.logger.info("(NetAPI) Input stream failed; " + e.getMessage());
+			log.info("(NetAPI) Input stream failed; " + e.getMessage());
 		}
 	}
 	
@@ -99,17 +99,17 @@ public class NetListenThread extends Thread {
 			
 			if(in instanceof UsernamePacket) {
 				UsernamePacket u = (UsernamePacket) in;
-				log.logger.info("(NetAPI) Username: " + u.username + " found");
+				log.info("(NetAPI) Username: " + u.username + " found");
 				return u.username;
 			} else if(in instanceof Object) {
-				log.logger.info("(NetAPI) Received: " + in.getClass().getName());
+				log.info("(NetAPI) Received: " + in.getClass().getName());
 			} else {
-				log.logger.info("(NetAPI) Received null");
+				log.info("(NetAPI) Received null");
 			}
 		} catch (IOException e) {
-			log.logger.info("(NetAPI) IOException: " + e.getMessage());
+			log.info("(NetAPI) IOException: " + e.getMessage());
 		} catch (ClassNotFoundException e) {
-			log.logger.info("(NetAPI) Could not find class: " + e.getMessage());
+			log.info("(NetAPI) Could not find class: " + e.getMessage());
 		}
 		
 		return null;
@@ -121,7 +121,7 @@ public class NetListenThread extends Thread {
 	* @since	0.1
 	*/
 	public void run() {
-		log.logger.info("(NetAPI) Listening for NetAPI connections");
+		log.info("(NetAPI) Listening for NetAPI connections");
 		assignThread.start();
 		while(alive) {
 			try {
