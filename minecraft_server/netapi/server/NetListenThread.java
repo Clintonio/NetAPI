@@ -7,8 +7,7 @@ import java.io.ObjectOutputStream;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.SocketException;
-
-import net.minecraft.server.MinecraftServer;
+import java.util.logging.Logger;
 
 import netapi.packet.UsernamePacket;
 
@@ -37,7 +36,7 @@ public class NetListenThread extends Thread {
 	*
 	* @since	0.1
 	*/
-	private MinecraftServer mcServer;
+	private Logger log = Logger.getLogger("Minecraft");
 	/**
 	* True while alive
 	*
@@ -50,9 +49,8 @@ public class NetListenThread extends Thread {
 	*
 	* @since	0.1
 	*/
-	public NetListenThread(ServerSocket sock, MinecraftServer server) {
-		server.logger.info("(NetAPI) NetAPI Server Started");
-		mcServer 		= server;
+	public NetListenThread(ServerSocket sock) {
+		log.logger.info("(NetAPI) NetAPI Server Started");
 		netAPISocket	= sock;
 		assignThread	= new NetAssignThread(server);
 		
@@ -70,21 +68,21 @@ public class NetListenThread extends Thread {
 	* @param	socket		Socket being accepted
 	*/
 	private void processUser(Socket socket) {	
-		mcServer.logger.info("(NetAPI) Finding the name of the connected user");
-		mcServer.logger.info("(NetAPI) Creating input stream");
+		log.logger.info("(NetAPI) Finding the name of the connected user");
+		log.logger.info("(NetAPI) Creating input stream");
 		
 		try {
 			ObjectInputStream  ois = new ObjectInputStream(new BufferedInputStream(socket.getInputStream()));
-			mcServer.logger.info("(NetAPI) Attempting to read name packet");
+			log.logger.info("(NetAPI) Attempting to read name packet");
 			String username = getUsername(ois);
 			
 			if(username instanceof String) {
 				assignThread.assign(username, socket, ois);
 			} else {
-				mcServer.logger.info("(NetAPI) No username, disconnecting user");
+				log.logger.info("(NetAPI) No username, disconnecting user");
 			}
 		} catch (IOException e) {
-			mcServer.logger.info("(NetAPI) Input stream failed; " + e.getMessage());
+			log.logger.info("(NetAPI) Input stream failed; " + e.getMessage());
 		}
 	}
 	
@@ -101,17 +99,17 @@ public class NetListenThread extends Thread {
 			
 			if(in instanceof UsernamePacket) {
 				UsernamePacket u = (UsernamePacket) in;
-				mcServer.logger.info("(NetAPI) Username: " + u.username + " found");
+				log.logger.info("(NetAPI) Username: " + u.username + " found");
 				return u.username;
 			} else if(in instanceof Object) {
-				mcServer.logger.info("(NetAPI) Received: " + in.getClass().getName());
+				log.logger.info("(NetAPI) Received: " + in.getClass().getName());
 			} else {
-				mcServer.logger.info("(NetAPI) Received null");
+				log.logger.info("(NetAPI) Received null");
 			}
 		} catch (IOException e) {
-			mcServer.logger.info("(NetAPI) IOException: " + e.getMessage());
+			log.logger.info("(NetAPI) IOException: " + e.getMessage());
 		} catch (ClassNotFoundException e) {
-			mcServer.logger.info("(NetAPI) Could not find class: " + e.getMessage());
+			log.logger.info("(NetAPI) Could not find class: " + e.getMessage());
 		}
 		
 		return null;
@@ -123,7 +121,7 @@ public class NetListenThread extends Thread {
 	* @since	0.1
 	*/
 	public void run() {
-		mcServer.logger.info("(NetAPI) Listening for NetAPI connections");
+		log.logger.info("(NetAPI) Listening for NetAPI connections");
 		assignThread.start();
 		while(alive) {
 			try {
