@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Hashtable;
 import java.util.HashSet;
 import java.util.Collection;
+import java.util.logging.Logger;
 
 import net.minecraft.src.EntityPlayer;
 
@@ -35,6 +36,12 @@ public class NetAPI {
 	* @since	0.1
 	*/
 	private static NetPacketThread netThread = null;
+	/**
+	* The logger for netAPI 
+	*
+	* @since	0.1
+	*/
+	public static final Logger log = Logger.getLogger("Minecraft");
 	
 	//===================
 	// Packet methods

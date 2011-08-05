@@ -11,8 +11,11 @@ import java.util.Hashtable;
 import java.util.HashSet;
 import java.util.Collection;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import net.minecraft.src.EntityPlayer;
+import net.minecraft.src.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
 
 /**
 * NetAPI for easy controlling of the sending and receiving of packets
@@ -36,6 +39,18 @@ public class NetAPI {
 	* @since	0.1
 	*/
 	private static Hashtable<String, NetPacketThread> netSendThreads = new Hashtable<String, NetPacketThread>();
+	/**
+	* The logger for netAPI 
+	*
+	* @since	0.1
+	*/
+	public static final Logger log = Logger.getLogger("Minecraft");
+	/**
+	* The minecraft server instances for the vanilla netAPI
+	*
+	* @since	0.1
+	*/
+	private static MinecraftServer server;
 	
 	//===================
 	// Packet methods
@@ -202,6 +217,21 @@ public class NetAPI {
 	}
 	
 	//============
+	// Server API only
+	//============
+	
+	/**
+	* Get a player by their username
+	*
+	* @since	0.1
+	* @param	username	Player's username
+	* @return	Player object
+	*/
+	public static EntityPlayerMP getPlayer(String username) {
+		return server.configManager.getPlayerEntity(username);
+	}
+	
+	//============
 	// Operation methods. Not for API
 	//============
 	
@@ -267,6 +297,20 @@ public class NetAPI {
 	public static void playerDisconnected(String username) {
 		if(netSendThreads.containsKey(username)) {
 			netSendThreads.remove(username);
+		}
+	}
+	
+	/**
+	* Set the server instance
+	*
+	* @since	0.1
+	* @param	server	Server instance
+	*/
+	public static void setServer(MinecraftServer server) {
+		if(NetAPI.server != null) {
+			throw new RuntimeException("Don't re-set this value");
+		} else {
+			NetAPI.server = server;
 		}
 	}
 }

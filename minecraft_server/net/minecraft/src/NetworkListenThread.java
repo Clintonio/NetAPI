@@ -15,6 +15,7 @@ import net.minecraft.server.MinecraftServer;
 //=========
 // +NetAPI
 //=========
+import netapi.NetAPI;
 import netapi.server.NetListenThread;
 //=========
 // -NetAPI
@@ -50,8 +51,9 @@ public class NetworkListenThread
 		// +NetAPI
 		//=========
 		logger.fine("(NetAPI) Creating server socket");
+		NetAPI.setServer(minecraftserver);
 		netListenSocket = new ServerSocket(i - 1, 0, inetaddress);
-		netListenThread	= new NetListenThread(netListenSocket, minecraftserver);
+		netListenThread	= new NetListenThread(netListenSocket);
 		logger.fine("(NetAPI) Starting NetAPI listening thread");
 		netListenThread.start();
 		//=========

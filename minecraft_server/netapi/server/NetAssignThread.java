@@ -1,5 +1,7 @@
 package netapi.server;
 
+import netapi.NetAPI;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.net.Socket;
 import java.util.Map;
@@ -7,7 +9,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.SocketException;
 
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.EntityPlayerMP;
 import net.minecraft.src.NetworkManager;
 
@@ -35,12 +36,6 @@ public class NetAssignThread extends Thread {
 	* @since	0.1
 	*/
 	private boolean alive = true;
-	/**
-	* Minecraft server instance primarily for logging
-	*
-	* @since	0.1
-	*/
-	private MinecraftServer mcServer;
 	
 	/**
 	* Create a new net accept 
@@ -48,8 +43,7 @@ public class NetAssignThread extends Thread {
 	* @since	0.1
 	* @param	server	Server instance
 	*/
-	public NetAssignThread(MinecraftServer server) {
-		mcServer = server;
+	public NetAssignThread() {
 	}
 	
 	/**
@@ -64,16 +58,6 @@ public class NetAssignThread extends Thread {
 	public void assign(String username, Socket socket, ObjectInputStream ois) {
 		Object[] store = { socket, ois };
 		playerTable.put(username, store);
-	}
-	
-	/**
-	* Get a player from the pool by name
-	*
-	* @since	0.1
-	* @param	name		Name of player
-	*/
-	private EntityPlayerMP getPlayer(String name) {
-		return mcServer.configManager.getPlayerEntity(name);
 	}
 	
 	/**
@@ -92,8 +76,8 @@ public class NetAssignThread extends Thread {
 			Socket				sock	= (Socket) store[0];
 			ObjectInputStream	ois		= (ObjectInputStream) store[1];
 			
-			mcServer.logger.warning("(NetAPI) Checking player " + name);
-			if((player = getPlayer(name)) != null) {
+			NetAPI.log.info("(NetAPI) Checking player " + name);
+			if((player = NetAPI.getPlayer(name)) != null) {
 				addNewPlayer(player, name, sock, ois);
 				playerTable.remove(name);
 			}
@@ -115,7 +99,7 @@ public class NetAssignThread extends Thread {
 		// Check if they are from same address, if not, remove the
 		// player in case of a mix up/ hack (n.b: this is integrity code)
 		if(netMan.getSocketAddress().equals(sock.getInetAddress())) {
-			mcServer.logger.warning("(NetAPI) Authenticated " + name);
+			NetAPI.log.info("(NetAPI) Authenticated " + name);
 			try {
 				netMan.setUsername(name);
 				netMan.setNetAPISocket(sock, ois);
@@ -131,7 +115,7 @@ public class NetAssignThread extends Thread {
 	* @since	0.1
 	*/
 	public void run() {
-		mcServer.logger.warning("(NetAPI) User assignment starting");
+		NetAPI.log.info("(NetAPI) User assignment starting");
 		while(alive) {
 			updateAllUsers();
 			

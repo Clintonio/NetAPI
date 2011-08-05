@@ -52,7 +52,7 @@ public class NetListenThread extends Thread {
 	public NetListenThread(ServerSocket sock) {
 		log.info("(NetAPI) NetAPI Server Started");
 		netAPISocket	= sock;
-		assignThread	= new NetAssignThread(server);
+		assignThread	= new NetAssignThread();
 		
 		try {
 			netAPISocket.setSoTimeout(150);
